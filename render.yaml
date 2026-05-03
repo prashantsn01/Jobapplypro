@@ -1,23 +1,21 @@
 # render.yaml — Render Blueprint
-# Commit this file to your repo root.
-# In Render dashboard: New → Blueprint → connect your repo → deploy.
-# Render reads this file and creates all services automatically.
 
 services:
   # ── Node.js Backend ────────────────────────────────────────────────────────
   - type: web
     name: jobapplypro-server
     runtime: node
-    region: oregon           # or singapore for India-proximity
-    plan: free               # upgrade to starter ($7/mo) for always-on
+    region: oregon
+    plan: free
 
     rootDir: server
     buildCommand: npm install && npx prisma generate
-    startCommand: node scripts/start.sh || sh scripts/start.sh
+
+    # ✅ FIXED start command
+    startCommand: node index.js
 
     healthCheckPath: /health
 
-    # Auto-deploy on every push to main
     autoDeploy: true
     branch: main
 
@@ -28,23 +26,22 @@ services:
       - key: PORT
         value: 3000
 
-      # ── Database — auto-wired from the postgres service below ──────────────
+      # ── Database ──────────────────────────────────────────────────────────
       - key: DATABASE_URL
         fromDatabase:
           name: jobapplypro-db
           property: connectionString
 
-      # ── Redis — auto-wired from the redis service below ───────────────────
+      # ── Redis ─────────────────────────────────────────────────────────────
       - key: REDIS_URL
         fromService:
           name: jobapplypro-redis
           type: redis
           property: connectionString
 
-      # ── Secrets — fill these in Render dashboard → Environment ────────────
-      # After first deploy: Render dashboard → jobapplypro-server → Environment
+      # ── Secrets (set manually in Render dashboard) ─────────────────────────
       - key: SESSION_SECRET
-        sync: false          # means: set manually in dashboard
+        sync: false
 
       - key: ENCRYPTION_KEY
         sync: false
@@ -56,26 +53,33 @@ services:
         sync: false
 
       - key: GOOGLE_REDIRECT_URI
-        sync: false          # set to: https://jobapplypro-server.onrender.com/auth/google/callback
+        sync: false
+        # set in dashboard:
+        # https://jobapplypro-server.onrender.com/auth/google/callback
 
       - key: CLIENT_URL
-        sync: false          # set to: https://jobapplypro.vercel.app
+        sync: false
+        # example:
+        # https://jobapplypro.vercel.app
 
       - key: VERCEL_PROJECT_SLUG
-        sync: false          # set to: jobapplypro (your Vercel project name)
+        sync: false
 
-      # Optional scraper cookies
       - key: LINKEDIN_COOKIE
         sync: false
+
       - key: NAUKRI_COOKIE
         sync: false
 
-  # ── Redis ──────────────────────────────────────────────────────────────────
+  # ── Redis (✅ FIXED with IP allow list) ────────────────────────────────────
   - type: redis
     name: jobapplypro-redis
     region: oregon
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow all
 
 databases:
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
