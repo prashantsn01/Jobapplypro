@@ -1,0 +1,6 @@
+server/
+docker-compose.yml
+render.yaml
+*.zip
+README.md
+DEPLOY.md

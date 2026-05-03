@@ -1,0 +1,25 @@
+{
+  "name": "jobapplypro",
+  "version": "2.0.0",
+  "description": "JobApplyPro — Full-stack job application tracker",
+  "private": true,
+  "scripts": {
+    "install:all":    "npm install --prefix server && npm install --prefix client",
+    "dev":            "concurrently -n server,client -c cyan,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server":     "npm run dev --prefix server",
+    "dev:client":     "npm run dev --prefix client",
+    "build":          "npm run build --prefix client",
+    "db:migrate":     "npm run db:migrate --prefix server",
+    "db:generate":    "npm run db:generate --prefix server",
+    "db:seed":        "npm run db:seed --prefix server",
+    "db:studio":      "npm run db:studio --prefix server",
+    "test":           "npm test --prefix server",
+    "docker:up":      "docker compose up -d --build",
+    "docker:down":    "docker compose down",
+    "docker:logs":    "docker compose logs -f",
+    "docker:reset":   "docker compose down -v && docker compose up -d --build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

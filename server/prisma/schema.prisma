@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String
+  googleId        String?  @unique
+  avatar          String?
+  refreshToken    String?          // AES-256-GCM encrypted
+  accessToken     String?          // AES-256-GCM encrypted
+  gmailConnected  Boolean  @default(false)
+  profileComplete Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // ── Flat profile fields (replaces old profile Json) ──────────────────────
+  phone            String?
+  city             String?
+  college          String?
+  degree           String?
+  branch           String?
+  graduationYear   String?
+  cgpa             String?
+  skills           String[]         // postgres text array
+  jobPreferences   String[]
+  linkedinUrl      String?
+  githubUrl        String?
+  portfolioUrl     String?
+  openToRemote     Boolean  @default(false)
+  openToRelocation Boolean  @default(false)
+  noticePeriod     String?
+  expectedSalary   String?
+
+  applications     Application[]
+  emailSyncs       EmailSync[]
+  notifications    Notification[]
+
+  @@index([email])
+  @@index([googleId])
+}
+
+model Application {
+  id              String    @id @default(uuid())
+  userId          String
+  company         String
+  role            String
+  platform        String    // linkedin | naukri | unstop | cutshort | indeed | manual | other
+  status          String    @default("applied")  // applied | interview | offer | rejected | ghosted
+  applyUrl        String?
+  salary          String?
+  location        String?
+  notes           String?
+  appliedAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  replyDetected   Boolean   @default(false)
+  replyType       String?   // interview | rejection | offer | other
+  replyEmailId    String?
+  replyDetectedAt DateTime?
+  replySnippet    String?
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([appliedAt])
+}
+
+model Job {
+  id              String    @id @default(uuid())
+  externalId      String    @unique
+  title           String
+  company         String
+  platform        String
+  location        String?
+  salary          String?
+  salaryMin       Float?
+  salaryMax       Float?
+  applyUrl        String
+  postedAt        DateTime?
+  tags            String[]
+  isRemote        Boolean   @default(false)
+  isPortalLink    Boolean   @default(false)
+  experienceLevel String?
+  description     String?
+  companyLogo     String?
+  jobType         String?   // frontend | fullstack | other
+  fetchedAt       DateTime  @default(now())
+  active          Boolean   @default(true)
+
+  @@index([platform])
+  @@index([jobType])
+  @@index([fetchedAt])
+  @@index([isPortalLink])
+}
+
+model EmailSync {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  lastSyncedAt  DateTime @default(now())
+  totalFetched  Int      @default(0)
+  totalMatched  Int      @default(0)
+  status        String   @default("idle")  // idle | running | done | error
+  errorMsg      String?
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // gmail_reply | job_match | system
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
